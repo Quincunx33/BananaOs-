@@ -1,0 +1,20 @@
+{
+  "name": "🍌 Banana OS",
+  "short_name": "BananaOS",
+  "description": "A fresh and fruity operating system experience",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "display": "fullscreen",
+  "background_color": "#FFB300",
+  "theme_color": "#FF9800",
+  "orientation": "any",
+  "categories": ["productivity", "entertainment"],
+  "lang": "en"
+}

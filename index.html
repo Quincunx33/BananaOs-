@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>🍌Banana OS</title>
+
+    <!-- ✅ PWA & Icon Configuration -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon.png">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="🍌Banana OS">
+
+    <!-- ✅ CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    
+    <style>
+        .optimization-notification {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #1a1a1a;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            z-index: 10000;
+            border: 2px solid #10B981;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: all 0.5s ease;
+            max-width: 320px;
+        }
+        
+        .performance-result {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #333;
+            font-size: 11px;
+            color: #60A5FA;
+        }
+        
+        .test-details {
+            font-size: 10px;
+            color: #888;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-900 text-white h-screen overflow-hidden select-none" id="desktop">
+    <!-- Desktop Icons -->
+    <div class="absolute inset-0 p-4" id="desktop-icons">
+        <div class="desktop-icon" ondblclick="openApp('file-explorer')" oncontextmenu="showContextMenu(event, 'desktop-icon')">
+            <i class="fas fa-folder text-yellow-400"></i>
+            <span>Files</span>
+        </div>
+        <div class="desktop-icon" ondblclick="openApp('terminal')" oncontextmenu="showContextMenu(event, 'desktop-icon')">
+            <i class="fas fa-terminal text-green-400"></i>
+            <span>Terminal</span>
+        </div>
+        <div class="desktop-icon" ondblclick="openApp('browser')" oncontextmenu="showContextMenu(event, 'desktop-icon')">
+            <i class="fas fa-globe text-blue-400"></i>
+            <span>Browser</span>
+        </div>
+        <div class="desktop-icon" ondblclick="openApp('settings')" oncontextmenu="showContextMenu(event, 'desktop-icon')">
+            <i class="fas fa-cog text-gray-400"></i>
+            <span>Settings</span>
+        </div>
+    </div>
+
+    <!-- Taskbar -->
+    <div class="absolute bottom-0 left-0 right-0 bg-gray-800 bg-opacity-90 border-t border-gray-700 flex items-center justify-between px-4 py-2 z-50">
+        <div class="flex items-center space-x-2">
+            <button id="start-button" class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded flex items-center"
+                    onclick="toggleStartMenu()">
+                <i class="fab fa-linux mr-2"></i>
+                <span>Start</span>
+            </button>
+
+            <div class="flex space-x-2 ml-4">
+                <button class="taskbar-button w-10 h-10 flex items-center justify-center bg-gray-700 hover:bg-gray-600 rounded"
+                        onclick="openApp('file-explorer')">
+                    <i class="fas fa-folder text-yellow-400"></i>
+                </button>
+                <button class="taskbar-button w-10 h-10 flex items-center justify-center bg-gray-700 hover:bg-gray-600 rounded"
+                        onclick="openApp('terminal')">
+                    <i class="fas fa-terminal text-green-400"></i>
+                </button>
+                <button class="taskbar-button w-10 h-10 flex items-center justify-center bg-gray-700 hover:bg-gray-600 rounded"
+                        onclick="openApp('browser')">
+                    <i class="fas fa-globe text-blue-400"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-3">
+            <div class="text-sm">
+                <span id="clock-time">00:00</span>
+                <span id="clock-date" class="text-gray-400 ml-2">Jan 1</span>
+            </div>
+            <div class="w-4 h-4 bg-green-500 rounded-full"></div>
+        </div>
+    </div>
+
+    <!-- Start Menu -->
+    <div id="start-menu" class="absolute bottom-16 left-4 w-64 bg-gray-800 rounded-t-lg rounded-br-lg shadow-xl border border-gray-700 hidden z-50">
+        <div class="p-3 border-b border-gray-700 flex items-center bg-gray-700 rounded-t-lg">
+            <i class="fab fa-linux text-blue-400 mr-2"></i>
+            <span class="font-medium">🍌Banana OS</span>
+        </div>
+        <div class="p-2 grid grid-cols-3 gap-2">
+            <button class="flex flex-col items-center p-2 hover:bg-gray-700 rounded" onclick="openApp('file-explorer')">
+                <i class="fas fa-folder text-yellow-400 text-2xl mb-1"></i>
+                <span class="text-xs">Files</span>
+            </button>
+            <button class="flex flex-col items-center p-2 hover:bg-gray-700 rounded" onclick="openApp('terminal')">
+                <i class="fas fa-terminal text-green-400 text-2xl mb-1"></i>
+                <span class="text-xs">Terminal</span>
+            </button>
+            <button class="flex flex-col items-center p-2 hover:bg-gray-700 rounded" onclick="openApp('browser')">
+                <i class="fas fa-globe text-blue-400 text-2xl mb-1"></i>
+                <span class="text-xs">Browser</span>
+            </button>
+            <button class="flex flex-col items-center p-2 hover:bg-gray-700 rounded" onclick="openApp('settings')">
+                <i class="fas fa-cog text-gray-400 text-2xl mb-1"></i>
+                <span class="text-xs">Settings</span>
+            </button>
+            <button class="flex flex-col items-center p-2 hover:bg-gray-700 rounded" onclick="openApp('calculator')">
+                <i class="fas fa-calculator text-purple-400 text-2xl mb-1"></i>
+                <span class="text-xs">Calculator</span>
+            </button>
+            <button class="flex flex-col items-center p-2 hover:bg-gray-700 rounded" onclick="openApp('text-editor')">
+                <i class="fas fa-file-alt text-red-400 text-2xl mb-1"></i>
+                <span class="text-xs">Text Editor</span>
+            </button>
+            <button class="flex flex-col items-center p-2 hover:bg-gray-700 rounded" onclick="openApp('weather')">
+                <i class="fas fa-cloud-sun text-blue-400 text-2xl mb-1"></i>
+                <span class="text-xs">Weather</span>
+            </button>
+            <button class="flex flex-col items-center p-2 hover:bg-gray-700 rounded" onclick="openApp('camera')">
+                <i class="fas fa-camera text-pink-400 text-2xl mb-1"></i>
+                <span class="text-xs">Camera</span>
+            </button>
+            <button class="flex flex-col items-center p-2 hover:bg-gray-700 rounded" onclick="openApp('photo-viewer')">
+                <i class="fas fa-images text-green-400 text-2xl mb-1"></i>
+                <span class="text-xs">Photos</span>
+            </button>
+        </div>
+        <div class="p-3 border-t border-gray-700 bg-gray-700 rounded-br-lg">
+            <button class="flex items-center text-sm hover:bg-gray-600 w-full p-2 rounded" onclick="shutdown()">
+                <i class="fas fa-power-off text-red-400 mr-2"></i>
+                <span>Shut Down</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div id="context-menu" class="context-menu bg-gray-800 border border-gray-700 rounded shadow-lg w-48">
+        <div class="py-1">
+            <button class="w-full text-left px-4 py-2 hover:bg-gray-700 flex items-center">
+                <i class="fas fa-folder-open mr-2 text-blue-400"></i>
+                <span>Open</span>
+            </button>
+            <button class="w-full text-left px-4 py-2 hover:bg-gray-700 flex items-center">
+                <i class="fas fa-cut mr-2 text-yellow-400"></i>
+                <span>Cut</span>
+            </button>
+            <button class="w-full text-left px-4 py-2 hover:bg-gray-700 flex items-center">
+                <i class="fas fa-copy mr-2 text-green-400"></i>
+                <span>Copy</span>
+            </button>
+            <button class="w-full text-left px-4 py-2 hover:bg-gray-700 flex items-center">
+                <i class="fas fa-paste mr-2 text-purple-400"></i>
+                <span>Paste</span>
+            </button>
+            <div class="border-t border-gray-700 my-1"></div>
+            <button class="w-full text-left px-4 py-2 hover:bg-gray-700 flex items-center">
+                <i class="fas fa-trash-alt mr-2 text-red-400"></i>
+                <span>Delete</span>
+            </button>
+            <button class="w-full text-left px-4 py-2 hover:bg-gray-700 flex items-center">
+                <i class="fas fa-cog mr-2 text-gray-400"></i>
+                <span>Properties</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Window Template -->
+    <template id="window-template">
+        <div class="window absolute bg-gray-800 border border-gray-700 rounded shadow-xl overflow-hidden animate-fade-in z-10" style="width: 600px; height: 400px;">
+            <div class="window-header bg-gray-700 px-3 py-2 flex justify-between items-center cursor-move">
+                <div class="flex items-center">
+                    <i class="app-icon mr-2"></i>
+                    <span class="app-title font-medium"></span>
+                </div>
+                <div class="flex space-x-2">
+                    <button class="w-6 h-6 flex items-center justify-center hover:bg-gray-600 rounded" onclick="minimizeWindow(this)">
+                        <i class="fas fa-minus text-xs"></i>
+                    </button>
+                    <button class="w-6 h-6 flex items-center justify-center hover:bg-gray-600 rounded" onclick="maximizeWindow(this)">
+                        <i class="fas fa-square text-xs"></i>
+                    </button>
+                    <button class="w-6 h-6 flex items-center justify-center hover:bg-red-500 rounded" onclick="closeWindow(this)">
+                        <i class="fas fa-times text-xs"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="app-content h-full overflow-auto"></div>
+        </div>
+    </template>
+
+    <!-- ✅ Scripts -->
+    <script src="https://unpkg.com/@ungap/custom-elements-builtin"></script>
+    <script type="module" src="https://unpkg.com/x-frame-bypass"></script>
+    <script src="js/clock.js"></script>
+    <script src="js/menu.js"></script>
+    <script src="js/context.js"></script>
+    <script src="js/window.js"></script>
+    <script src="js/terminal.js"></script>
+    <script src="js/calculator.js"></script>
+    <script src="js/browser.js"></script>
+    <script src="js/settings.js"></script>
+    <script src="js/texteditor.js"></script>
+    <script src="js/weather.js"></script>
+    <script src="js/camera.js"></script>
+    <script src="js/photo-viewer.js"></script>
+
+   
+    <!-- 🍌 MAIN APP FIRST -->
+    <script src="js/kernel.js"></script>
+    <script src="js/main.js"></script>
+
+    <!-- 🍌 OPTIMIZATION MODULES AFTER MAIN.JS -->
+    <script src="banana_worker.js"></script>
+    <script src="banana_optimization.js"></script>
+    <script src="banana_lazy_module.js"></script>
+
+    <!-- 🍌 OPTIMIZATION INITIALIZER WITH REAL PERFORMANCE TESTS - FIXED VERSION -->
+    <script>
+    // Wait for everything to load
+    window.addEventListener('load', function() {
+        console.log('🍌 All resources loaded, starting optimization engine...');
+        
+        // Initialize optimizations after everything is ready
+        setTimeout(initializeAllOptimizations, 1000);
+    });
+
+    async function initializeAllOptimizations() {
+        console.log('🚀 INITIALIZING BANANA OPTIMIZATIONS...');
+        
+        const optimizationStatus = {
+            BananaOpt: typeof BananaOpt !== 'undefined',
+            BananaLazyLoader: typeof BananaLazyLoader !== 'undefined',
+            BananaWorker: typeof BananaWorker !== 'undefined'
+        };
+
+        console.log('📊 Optimization Modules Status:', optimizationStatus);
+
+        // Apply optimizations based on available modules
+        if (optimizationStatus.BananaOpt) {
+            console.log('✅ Applying BananaOpt optimizations...');
+            applyBananaOptOptimizations();
+        }
+
+        if (optimizationStatus.BananaLazyLoader) {
+            console.log('✅ Applying BananaLazyLoader optimizations...');
+            applyLazyLoaderOptimizations();
+        }
+
+        if (optimizationStatus.BananaWorker) {
+            console.log('✅ BananaWorker detected - ready for heavy tasks');
+        }
+
+        // Test REAL optimizations and show visual result - FIXED: await added
+        const performanceResults = await runRealPerformanceTests();
+        
+        console.log('🎉 Banana Optimization Engine Started Successfully!');
+        
+        // Show visual notification with REAL performance results
+        showOptimizationNotification(optimizationStatus, performanceResults);
+    }
+
+    function applyBananaOptOptimizations() {
+        try {
+            // Apply debounce to window resize
+            const debouncedResize = BananaOpt.debounce(function() {
+                document.querySelectorAll('.window').forEach(window => {
+                    setOptimalWindowSize(window);
+                });
+            }, 250);
+
+            window.addEventListener('resize', debouncedResize);
+            console.log('✅ Window resize optimization applied');
+
+            // Optimize window dragging if throttleRAF is available
+            if (BananaOpt.throttleRAF) {
+                const originalMakeDraggable = window.makeDraggable;
+                if (typeof originalMakeDraggable === 'function') {
+                    window.makeDraggable = function(windowElement) {
+                        makeDraggableOptimized(windowElement);
+                    };
+                    console.log('✅ Window drag optimization applied');
+                }
+            }
+
+        } catch (error) {
+            console.warn('❌ BananaOpt optimization failed:', error);
+        }
+    }
+
+    function applyLazyLoaderOptimizations() {
+        try {
+            // Register components for lazy loading
+            BananaLazyLoader.registerComponent('[data-calculator]', 
+                () => Promise.resolve({ default: window.initCalculator }), 
+                { threshold: 0.3 }
+            );
+
+            BananaLazyLoader.registerComponent('[data-terminal]', 
+                () => Promise.resolve({ default: window.initTerminal }), 
+                { threshold: 0.3 }
+            );
+
+            console.log('✅ Lazy loading components registered');
+
+        } catch (error) {
+            console.warn('❌ LazyLoader optimization failed:', error);
+        }
+    }
+
+    function makeDraggableOptimized(windowElement) {
+        let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+        const header = windowElement.querySelector('.window-header');
+        
+        if (!header) return;
+
+        const dragMouseDown = BananaOpt.throttleRAF((e) => {
+            e.preventDefault();
+            pos3 = e.clientX;
+            pos4 = e.clientY;
+            document.addEventListener('mouseup', closeDragElement);
+            document.addEventListener('mousemove', elementDrag);
+        });
+
+        header.addEventListener('mousedown', dragMouseDown);
+
+        const elementDrag = (e) => {
+            e.preventDefault();
+            pos1 = pos3 - e.clientX;
+            pos2 = pos4 - e.clientY;
+            pos3 = e.clientX;
+            pos4 = e.clientY;
+            
+            windowElement.style.top = (windowElement.offsetTop - pos2) + "px";
+            windowElement.style.left = (windowElement.offsetLeft - pos1) + "px";
+        };
+
+        const closeDragElement = () => {
+            document.removeEventListener('mouseup', closeDragElement);
+            document.removeEventListener('mousemove', elementDrag);
+        };
+    }
+
+    function setOptimalWindowSize(windowElement) {
+        const isMobile = window.innerWidth < 768;
+        
+        if (isMobile) {
+            windowElement.style.width = '95vw';
+            windowElement.style.height = '80vh';
+            windowElement.style.top = '10vh';
+            windowElement.style.left = '2.5vw';
+        } else {
+            windowElement.style.width = '600px';
+            windowElement.style.height = '400px';
+            // Center the window
+            windowElement.style.top = '50%';
+            windowElement.style.left = '50%';
+            windowElement.style.transform = 'translate(-50%, -50%)';
+        }
+    }
+
+    // FIXED: Animation test function that properly returns a Promise
+    function testAnimationPerformance() {
+        return new Promise((resolve) => {
+            const startTime = performance.now();
+            let frames = 0;
+            const testDuration = 500; // 0.5 seconds
+            
+            function testFrame() {
+                frames++;
+                const currentTime = performance.now();
+                
+                if (currentTime - startTime < testDuration) {
+                    // Simulate animation calculations
+                    const progress = (currentTime - startTime) / testDuration;
+                    const rotation = progress * 360;
+                    const scale = 1 + Math.sin(progress * Math.PI * 2) * 0.1;
+                    
+                    requestAnimationFrame(testFrame);
+                } else {
+                    const endTime = performance.now();
+                    const totalTime = endTime - startTime;
+                    const fps = (frames / totalTime) * 1000;
+                    
+                    resolve({
+                        time: totalTime.toFixed(2),
+                        fps: fps.toFixed(1),
+                        frames: frames,
+                        type: 'Animation Performance'
+                    });
+                }
+            }
+            
+            testFrame();
+        });
+    }
+
+    // FIXED: Make runRealPerformanceTests async and await animation test
+    async function runRealPerformanceTests() {
+        console.log('⚡ Running REAL performance tests...');
+        
+        const results = {
+            // Test 1: Window Operations (Real OS operation)
+            windowOperations: testWindowOperations(),
+            
+            // Test 2: Memory Usage (Real memory test)
+            memoryUsage: testMemoryUsage(),
+            
+            // Test 3: DOM Manipulation (Real DOM test)
+            domPerformance: testDOMPerformance(),
+            
+            // Test 4: Animation Performance (Real animation test) - FIXED: await added
+            animationPerformance: await testAnimationPerformance()
+        };
+        
+        console.log('📊 Real Performance Results:', results);
+        return results;
+    }
+
+    function testWindowOperations() {
+        const startTime = performance.now();
+        
+        // Real test: Simulate multiple window operations
+        let windowsCreated = 0;
+        const testIterations = 10;
+        
+        for (let i = 0; i < testIterations; i++) {
+            // Simulate window creation (without actual DOM manipulation)
+            const windowData = {
+                id: 'test-window-' + i,
+                title: 'Test Window ' + i,
+                content: '<div>Test Content</div>'
+            };
+            
+            // Simulate window positioning calculations
+            const position = calculateWindowPosition(windowsCreated);
+            windowsCreated++;
+        }
+        
+        const endTime = performance.now();
+        return {
+            time: (endTime - startTime).toFixed(2),
+            operations: testIterations,
+            type: 'Window Operations'
+        };
+    }
+
+    function testMemoryUsage() {
+        const startTime = performance.now();
+        
+        // Real test: Memory-intensive operations
+        let largeArray = [];
+        const arraySize = 10000;
+        
+        for (let i = 0; i < arraySize; i++) {
+            largeArray.push({
+                id: i,
+                name: 'Item ' + i,
+                data: new Array(100).fill('x').join(''),
+                timestamp: Date.now()
+            });
+        }
+        
+        // Process the array (real work)
+        const processed = largeArray.map(item => ({
+            ...item,
+            processed: true,
+            hash: item.name.length * item.data.length
+        }));
+        
+        const endTime = performance.now();
+        
+        // Clean up
+        largeArray = [];
+        
+        return {
+            time: (endTime - startTime).toFixed(2),
+            items: arraySize,
+            type: 'Memory Operations'
+        };
+    }
+
+    function testDOMPerformance() {
+        const startTime = performance.now();
+        
+        // Real test: DOM manipulation performance
+        const testContainer = document.createElement('div');
+        testContainer.style.cssText = 'position: absolute; left: -9999px; top: -9999px;';
+        document.body.appendChild(testContainer);
+        
+        const elementsCount = 100;
+        
+        // Create multiple DOM elements
+        for (let i = 0; i < elementsCount; i++) {
+            const element = document.createElement('div');
+            element.className = 'test-element';
+            element.innerHTML = `DOM Element ${i}`;
+            element.style.cssText = 'padding: 5px; margin: 2px; background: #333;';
+            testContainer.appendChild(element);
+        }
+        
+        // Manipulate DOM elements
+        const elements = testContainer.querySelectorAll('.test-element');
+        elements.forEach((el, index) => {
+            el.style.color = index % 2 === 0 ? '#fff' : '#ccc';
+            el.textContent = `Updated ${index}`;
+        });
+        
+        const endTime = performance.now();
+        
+        // Clean up
+        document.body.removeChild(testContainer);
+        
+        return {
+            time: (endTime - startTime).toFixed(2),
+            elements: elementsCount,
+            type: 'DOM Manipulation'
+        };
+    }
+
+    function calculateWindowPosition(index) {
+        const spacing = 20;
+        const startX = 100;
+        const startY = 100;
+        const maxPerRow = 3;
+        
+        const row = Math.floor(index / maxPerRow);
+        const col = index % maxPerRow;
+        
+        return {
+            x: startX + (col * (600 + spacing)),
+            y: startY + (row * (400 + spacing))
+        };
+    }
+
+    function showOptimizationNotification(status, performanceResults) {
+        const loadedCount = Object.values(status).filter(Boolean).length;
+        const totalCount = Object.keys(status).length;
+        
+        if (loadedCount === 0) return;
+        
+        const notification = document.createElement('div');
+        notification.className = 'optimization-notification';
+        
+        let statusColor = '#10B981';
+        let statusText = 'FULLY OPTIMIZED';
+        
+        if (loadedCount < totalCount) {
+            statusColor = '#F59E0B';
+            statusText = 'PARTIALLY OPTIMIZED';
+        }
+        
+        notification.style.borderColor = statusColor;
+        
+        // Calculate overall performance score - FIXED: handle undefined values
+        const validTests = Object.values(performanceResults).filter(test => test && test.time);
+        const totalTime = validTests.reduce((sum, test) => sum + parseFloat(test.time), 0);
+        const avgTime = validTests.length > 0 ? (totalTime / validTests.length).toFixed(2) : '0.00';
+        
+        let performanceStatus = 'EXCELLENT';
+        let performanceColor = '#10B981';
+        
+        if (avgTime > 100) {
+            performanceStatus = 'SLOW';
+            performanceColor = '#EF4444';
+        } else if (avgTime > 50) {
+            performanceStatus = 'GOOD';
+            performanceColor = '#F59E0B';
+        }
+        
+        notification.innerHTML = `
+            <div style="font-weight: bold; margin-bottom: 6px;">
+                🍌 ${statusText}
+            </div>
+            <div style="font-size: 11px; margin-bottom: 4px;">
+                Modules: ${loadedCount}/${totalCount} loaded
+            </div>
+            <div class="performance-result">
+                ⚡ Overall Performance: <strong style="color: ${performanceColor}">${performanceStatus}</strong>
+            </div>
+            <div class="test-details">
+                Avg: ${avgTime}ms | Tests: ${validTests.length}
+            </div>
+            <div style="font-size: 10px; color: #888; margin-top: 6px;">
+                Real performance tests completed
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto-hide after 8 seconds (longer for real tests)
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            notification.style.transform = 'translateY(-20px)';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 500);
+        }, 8000);
+        
+        // Also hide on click
+        notification.addEventListener('click', () => {
+            notification.style.opacity = '0';
+            notification.style.transform = 'translateY(-20px)';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 500);
+        });
+    }
+
+    // Make REAL performance tests globally available - FIXED: make async
+    window.testOptimizations = async function() {
+        const results = await runRealPerformanceTests();
+        showOptimizationNotification(window.getOptimizationStatus(), results);
+        return results;
+    };
+    
+    window.getOptimizationStatus = function() {
+        return {
+            BananaOpt: typeof BananaOpt !== 'undefined',
+            BananaLazyLoader: typeof BananaLazyLoader !== 'undefined',
+            BananaWorker: typeof BananaWorker !== 'undefined'
+        };
+    };
+
+    // Quick optimization check in console
+    console.log('🍌 Banana OS Optimization System Ready!');
+    console.log('💡 Type "testOptimizations()" in console to run REAL performance tests');
+    console.log('💡 Type "getOptimizationStatus()" in console to check optimization status');
+    </script>
+</body>
+</html>

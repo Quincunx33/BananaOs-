@@ -1,11 +1,11 @@
-// kernel.js - FIXED GAS CALLS VERSION
+// 🍌 Banana OS Kernel - Render Backend Integrated
 class BananaKernel {
     constructor() {
         this.system = {
-            version: '1.0.0',
+            version: '2.0.0',
             security: {
                 enabled: true,
-                accessLevel: 'TRIAL', // Default
+                accessLevel: 'TRIAL',
                 features: ['basic_apps'],
                 licenseKey: null,
                 userToken: null
@@ -15,22 +15,21 @@ class BananaKernel {
         };
         
         this.services = {};
-        // ✅ FIXED: Use your actual GAS URL
-        this.GAS_URL = 'https://script.google.com/macros/s/AKfycbwpnyBcXzi6vZbEjFOWAX_2lE98uiK_PEW5uCEjYpQ/exec';
+        // ✅ YOUR RENDER BACKEND URL
+        this.API_URL = 'https://bananaos.onrender.com';
         
-        console.log('🍌 Kernel Starting...');
+        console.log('🍌 Banana Kernel Starting...');
         this.init();
     }
 
     async init() {
         try {
             this.initServices();
-            
-            // ✅ FIXED: Better GAS call with error handling
             await this.initSecurity();
-            
             this.startSystemMonitor();
-            console.log('✅ Banana Kernel Ready');
+            
+            console.log('✅ Banana Kernel Ready!');
+            console.log('🔐 Security Level:', this.system.security.accessLevel);
             
         } catch (error) {
             console.error('❌ Kernel Boot Failed:', error);
@@ -39,72 +38,69 @@ class BananaKernel {
     }
 
     async initSecurity() {
-        console.log('🔐 Checking license...');
-        
         try {
-            // ✅ FIXED: Simple GAS call with timeout
-            const licenseData = await this.safeGASCall('verifyLicense');
+            console.log('🔐 Contacting Render Backend...');
             
-            if (licenseData && licenseData.valid !== false) {
-                this.system.security.accessLevel = licenseData.accessLevel || 'PREMIUM';
-                this.system.security.features = licenseData.features || ['all_features'];
-                this.system.security.userToken = licenseData.userToken;
+            const deviceId = this.getDeviceId();
+            const response = await this.safeApiCall('/verify-license', {
+                deviceId: deviceId
+            });
+            
+            if (response && response.valid) {
+                this.system.security.accessLevel = response.accessLevel;
+                this.system.security.features = response.features;
+                this.system.security.licenseKey = response.licenseKey;
+                this.system.security.userToken = response.userToken;
                 
-                console.log('🎉 License Valid:', this.system.security.accessLevel);
-            } else {
-                throw new Error('Invalid license response');
+                console.log('🎉 Backend License:', response.accessLevel);
+                console.log('📦 Features:', response.features);
+                
+                // Log successful verification
+                await this.logToBackend('kernel_boot', {
+                    accessLevel: response.accessLevel,
+                    deviceId: deviceId
+                });
             }
             
         } catch (error) {
-            console.warn('⚠️ GAS failed, using local fallback');
+            console.warn('⚠️ Backend unavailable, using local mode');
             this.useLocalFallback();
         }
     }
 
-    // ✅ FIXED: Safe GAS call function
-    async safeGASCall(action, data = {}) {
-        return new Promise((resolve, reject) => {
-            const timeout = setTimeout(() => {
-                reject(new Error('GAS timeout'));
-            }, 8000); // 8 second timeout
-
-            try {
-                // Add deviceId to all calls
-                const deviceId = this.getDeviceId();
-                const params = {
-                    deviceId: deviceId,
-                    version: this.system.version,
-                    ...data
-                };
-
-                // Build URL with parameters
-                const url = `${this.GAS_URL}?action=${action}&${new URLSearchParams(params)}`;
-                
-                console.log('📡 Calling GAS:', url);
-                
-                fetch(url)
-                    .then(response => {
-                        clearTimeout(timeout);
-                        if (!response.ok) {
-                            throw new Error(`HTTP ${response.status}`);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        console.log('✅ GAS response:', data);
-                        resolve(data);
-                    })
-                    .catch(error => {
-                        clearTimeout(timeout);
-                        console.warn('❌ GAS call failed:', error.message);
-                        reject(error);
-                    });
-                    
-            } catch (error) {
-                clearTimeout(timeout);
-                reject(error);
+    // ✅ SAFE API CALL WITH ERROR HANDLING
+    async safeApiCall(endpoint, data = {}) {
+        try {
+            const response = await fetch(`${this.API_URL}${endpoint}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
             }
-        });
+            
+            return await response.json();
+            
+        } catch (error) {
+            console.warn(`API Call failed (${endpoint}):`, error.message);
+            throw error;
+        }
+    }
+
+    async logToBackend(event, data = {}) {
+        try {
+            await this.safeApiCall('/log-event', {
+                event: event,
+                deviceId: this.getDeviceId(),
+                data: data
+            });
+        } catch (error) {
+            // Silent fail - not critical
+        }
     }
 
     getDeviceId() {
@@ -117,7 +113,6 @@ class BananaKernel {
     }
 
     useLocalFallback() {
-        // Check if user has local license
         const localLicense = localStorage.getItem('banana_license');
         if (localLicense) {
             this.system.security.accessLevel = 'PREMIUM';
@@ -126,7 +121,7 @@ class BananaKernel {
             console.log('🔑 Using local premium license');
         } else {
             this.system.security.accessLevel = 'TRIAL';
-            this.system.security.features = ['basic_apps'];
+            this.system.security.features = ['file_explorer', 'calculator', 'terminal_basic', 'browser_basic'];
             console.log('🆓 Trial mode activated');
         }
     }
@@ -172,11 +167,10 @@ class BananaKernel {
             activateLicense: (key) => this.activateLicense(key)
         };
 
-        console.log('✅ Services ready');
+        console.log('✅ Services initialized');
     }
 
     hasPermission(appId, action) {
-        // Basic permission system
         if (this.system.security.accessLevel === 'PREMIUM') {
             return true;
         }
@@ -187,40 +181,46 @@ class BananaKernel {
     }
 
     emergencyFallback() {
-        console.log('🚨 Emergency fallback');
+        console.log('🚨 Emergency fallback activated');
         this.system.security.accessLevel = 'TRIAL';
         this.system.security.features = ['basic_apps'];
     }
 
-    // ✅ FIXED: License activation with GAS
+    // ✅ LICENSE ACTIVATION WITH RENDER BACKEND
     async activateLicense(licenseKey) {
-        console.log('🔑 Activating license:', licenseKey);
+        console.log('🔑 Activating license via Render...');
         
         try {
-            const result = await this.safeGASCall('activateLicense', {
+            const result = await this.safeApiCall('/activate-license', {
+                deviceId: this.getDeviceId(),
                 licenseKey: licenseKey
             });
             
             if (result && result.success) {
-                this.system.security.accessLevel = result.accessLevel || 'PREMIUM';
-                this.system.security.features = result.features || ['all_features'];
+                this.system.security.accessLevel = result.accessLevel;
+                this.system.security.features = result.features;
                 this.system.security.licenseKey = licenseKey;
                 
                 // Save locally for fallback
                 localStorage.setItem('banana_license', licenseKey);
                 
-                console.log('✅ License activated via GAS');
+                await this.logToBackend('license_activated', {
+                    licenseKey: licenseKey,
+                    accessLevel: result.accessLevel
+                });
+                
+                console.log('✅ License activated via Render!');
                 return true;
             } else {
-                console.error('❌ GAS activation failed:', result.error);
+                console.error('❌ Activation failed:', result.error);
                 return false;
             }
             
         } catch (error) {
             console.error('❌ Activation failed:', error);
             
-            // Local activation as fallback
-            if (licenseKey && licenseKey.length > 5) {
+            // Local activation fallback
+            if (licenseKey && licenseKey.length > 3) {
                 this.system.security.accessLevel = 'PREMIUM';
                 this.system.security.licenseKey = licenseKey;
                 localStorage.setItem('banana_license', licenseKey);
@@ -232,7 +232,7 @@ class BananaKernel {
         }
     }
 
-    // ✅ App management
+    // ✅ APP MANAGEMENT
     async launchApp(appId, config = {}) {
         if (!this.hasPermission(appId, 'launch')) {
             throw new Error(`Permission denied for ${appId}`);
@@ -243,22 +243,34 @@ class BananaKernel {
             id: processId,
             appId: appId,
             status: 'running',
-            startTime: Date.now()
+            startTime: Date.now(),
+            config: config
         };
 
-        console.log(`🚀 Launched: ${appId}`);
+        await this.logToBackend('app_launched', { appId, processId });
+        console.log(`🚀 App launched: ${appId}`);
+        
         return processId;
     }
 
     terminateApp(processId) {
-        if (this.system.processes[processId]) {
+        const process = this.system.processes[processId];
+        if (process) {
             delete this.system.processes[processId];
+            this.logToBackend('app_terminated', { appId: process.appId });
+            console.log(`🔴 App terminated: ${process.appId}`);
             return true;
         }
         return false;
     }
 
     startSystemMonitor() {
+        console.log('📊 System monitor started');
+        
+        // Immediate health check
+        this.monitorSystemHealth();
+        
+        // Periodic monitoring
         setInterval(() => {
             this.monitorSystemHealth();
         }, 30000);
@@ -266,35 +278,45 @@ class BananaKernel {
 
     monitorSystemHealth() {
         const stats = {
-            memory: Object.keys(this.system.processes).length * 10,
+            memory: this.getMemoryUsage(),
             processes: Object.keys(this.system.processes).length,
-            security: this.system.security.accessLevel
+            security: this.system.security.accessLevel,
+            timestamp: Date.now()
         };
-        
-        // Log to GAS if available
-        this.logToGAS('system_health', stats);
-    }
 
-    async logToGAS(event, data) {
-        try {
-            await this.safeGASCall('logEvent', {
-                event: event,
-                data: data
-            });
-        } catch (error) {
-            // Silent fail - not critical
+        this.logToBackend('system_health', stats);
+        
+        // Auto cleanup if too many processes
+        if (stats.memory > 80) {
+            this.cleanupMemory();
         }
     }
 
+    getMemoryUsage() {
+        return Math.min(100, Object.keys(this.system.processes).length * 15);
+    }
+
+    cleanupMemory() {
+        const processes = Object.values(this.system.processes);
+        if (processes.length > 5) {
+            const oldest = processes.sort((a, b) => a.startTime - b.startTime)[0];
+            this.terminateApp(oldest.id);
+            console.log('🧹 Memory cleanup: Terminated oldest process');
+        }
+    }
+
+    // ✅ PUBLIC API
     getSystemInfo() {
         return {
             version: this.system.version,
             security: {
+                level: 'HIGH',
                 accessLevel: this.system.security.accessLevel,
                 features: this.system.security.features
             },
             processes: Object.keys(this.system.processes).length,
-            status: 'READY'
+            backend: 'Render.com',
+            status: 'OPERATIONAL'
         };
     }
 
@@ -306,28 +328,41 @@ class BananaKernel {
         return {
             kernel: 'running',
             security: this.system.security.accessLevel,
-            GAS: 'connected'
+            backend: 'connected',
+            services: Object.keys(this.services).length
         };
     }
 }
 
-// ✅ Initialize kernel
+// ✅ KERNEL INITIALIZATION
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Starting Banana OS with GAS...');
+    console.log('🚀 Banana OS Booting...');
     
     try {
         window.BananaKernel = new BananaKernel();
         
-        // Test after initialization
+        // Global access test
         setTimeout(() => {
-            console.log('🧪 Kernel Status:', window.BananaKernel.getStatus());
-        }, 2000);
+            const info = window.BananaKernel.getSystemInfo();
+            console.log('🎉 Banana OS Ready!', info);
+        }, 1000);
         
     } catch (error) {
-        console.error('💥 Kernel failed:', error);
+        console.error('💥 Kernel failed to start:', error);
+        
+        // Emergency kernel
         window.BananaKernel = {
-            getSystemInfo: () => ({ status: 'FALLBACK' }),
-            getStatus: () => ({ kernel: 'failed' })
+            getSystemInfo: () => ({ version: '2.0.0', status: 'EMERGENCY_MODE' }),
+            getStatus: () => ({ kernel: 'fallback' }),
+            launchApp: (appId) => console.log('Launching (fallback):', appId)
         };
     }
 });
+
+// ✅ GLOBAL FALLBACK
+if (typeof window !== 'undefined' && !window.BananaKernel) {
+    window.BananaKernel = {
+        getSystemInfo: () => ({ version: '2.0.0', status: 'GLOBAL_FALLBACK' }),
+        getStatus: () => ({ kernel: 'global_fallback' })
+    };
+}
